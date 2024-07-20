@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>朋友圈</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .container { max-width: 800px; margin: 20px auto; padding: 20px; background: #fff; }
+        .post { margin-bottom: 10px; padding: 10px; border: 1px solid #ddd; background: #f9f9f9; }
+        .post-title { font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>朋友圈</h1>
+        <div id="posts"></div>
+        <input type="text" id="post-title" placeholder="题目" maxlength="15">
+        <textarea id="post-content" placeholder="内容" maxlength="1000"></textarea>
+        <button onclick="submitPost()">发布</button>
+    </div>
+    <script src="https://www.gstatic.com/firebasejs/9.1.2/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.2/firebase-firestore.js"></script>
+    <script>
+        // Firebase配置
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+        // 初始化Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        function submitPost() {
+            const title = document.getElementById('post-title').value;
+            const content = document.getElementById('post-content').value;
+            if (title && content) {
+                db.collection('posts').add({
+                    title: title,
+                    content: content,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => {
+                    alert('发布成功！');
+                    loadPosts();
+                }).catch(error => {
+                    alert('发布失败：' + error.message);
+                });
+            } else {
+                alert('请填写所有字段');
+            }
+        }
+
+        function loadPosts() {
+            db.collection('posts').orderBy('timestamp', 'desc').onSnapshot(snapshot => {
+                const postsContainer = document.getElementById('posts');
+                postsContainer.innerHTML = '';
+                snapshot.forEach(doc => {
+                    const post = doc.data();
+                    const postElement = document.createElement('div');
+                    postElement.className = 'post';
+                    postElement.innerHTML = `<div class="post-title">${post.title}</div><div>${post.content.replace(/\n/g, '<br>')}</div>`;
+                    postsContainer.appendChild(postElement);
+                });
+            });
+        }
+
+        window.onload = loadPosts;
+    </script>
+</body>
+</html>        
